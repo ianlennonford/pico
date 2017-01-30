@@ -1,17 +1,27 @@
 pico-8 cartridge // http://www.pico-8.com
 version 8
 __lua__
---default project
+--princesses quest
 --increment
 
 function _init()
-  cls()
+  cls(7)
   debug={}
   state="title"
   cursor_id=1--[[menu variables]]--
   input_timer=0
   menu={"start","options"}
-  menu_state="game title here!!!"
+  menu_state="princesses quest"
+
+  entities={}--create a list of all entities in the current level
+
+  player={}--create the player object
+  player.state=1--*1=warrior,2=archer,3=wizard,4=???
+  player.x=0
+  player.y=0
+  player.sprite=1--corresponds to player state * anim length
+
+  add(entities,player)--add the player to list of entities
 end
 
 function update_menu()
@@ -37,42 +47,53 @@ function draw_menu()
   local x_offset=8
   local y_offset=50
   local id_offset=8
-  if menu_state=="game title here!!!" or menu_state=="options" then--draw title menu and options menu
-    print(">",x_offset-6,y_offset+(id_offset*(cursor_id-1)))--draw the cursor
-    print_centered(menu_state,y_offset-(id_offset*2),7)
+  if menu_state=="princesses quest" or menu_state=="options" then--draw title menu and options menu
+    print(">",x_offset+42,y_offset+(id_offset*(cursor_id-1)),0)--draw the cursor
+    print_centered(menu_state,#menu_state,y_offset-(id_offset*2),0)--print the menu title
     for i=1,#menu do--draw the menu options
-      print_centered(menu[i],y_offset+(id_offset*(i-1)),7)
+      print_centered(menu[i],5,y_offset+(id_offset*(i-1)),0)
     end
-  elseif menu_state=="pause" then--draw pause menu
+  elseif menu_state=="pause" then--*draw pause menu
+    print(">",x_offset+4,y_offset+(id_offset*(cursor_id-1)),0)--draw the cursor
+    print(menu_state,x_offset,y_offset-(id_offset*2),0)--print the menu title
+    for i=1,#menu do--draw the menu options
+      print(menu[i],x_offset+8,y_offset+(id_offset*(i-1)),0)
+    end
   end
 end
 
 function menu_action()
-  if menu_state=="game title here!!!" then
+  if menu_state=="princesses quest" then
     nil_table(menu)--clear the current menu table
     if cursor_id==1 then
       state="play"--start the game
-      --*maybe add pause menu stuff here?
-      cursor_id=1
+      nil_table(menu)
+      add(menu,"resume")
+      add(menu,"exit to menu")
+      menu_state="pause"
     elseif cursor_id==2 then--go to options menu
-      add(menu,"music volume")--*volume might not be editable?
-      add(menu,"sfx volume")
+      add(menu,"some option")
       add(menu,"back")
       menu_state="options"
       cursor_id=1
     end
   elseif menu_state=="options" then
-    if cursor_id==3 then--back to start menu
+    if cursor_id==2 then--back to start menu
       nil_table(menu)
       add(menu,"start")
       add(menu,"options")
-      menu_state="game title here!!!"
-      cursor_id=2
+      menu_state="princesses quest"
     end
   elseif menu_state=="pause" then
-    nil_table(menu)
-    add(menu,"resume")
-    add(menu,"exit to menu")
+    if cursor_id==1 then--resume the game
+      state="play"
+    elseif cursor_id==2 then--exit to main menu
+      nil_table(menu)
+      add(menu,"start")
+      add(menu,"options")
+      menu_state="princesses quest"
+      cursor_id=1
+    end
   end
   input_timer=0
 end
@@ -84,20 +105,17 @@ function nil_table(table)
   end
 end
 
-function print_centered(str,y,col)
-  print(str,64-(#str*2),y,col)
+function print_centered(str,str_len,y,col)
+  print(str,64-(str_len*2),y,col)
 end
 --[[end utilities]]--
-
 
 function _update60()
   if state=="title" then
     update_menu()
   elseif state=="play" then
     if btnp(5) then--*put this into a player input object?
-      --pause the game
-      state="pause"
-      menu_state="pause"
+      state="pause"--pause the game
     end
   elseif state=="pause" then
     update_menu()
@@ -105,27 +123,28 @@ function _update60()
 end
 
 function _draw()
-  cls()
+  cls(7)
   debug[1]="cursor_id:"..cursor_id
   debug[2]="state:"..state
-  debug[3]="menu table size:"..#menu
   for i=1,#debug do--draw debug
-    print(debug[i],70,2+(8*(i-1)),7)
+    print(debug[i],70,2+(8*(i-1)),0)
   end
   if state=="title" or state=="pause" then
     draw_menu()
+  --elseif state=="pause" then
+  --  draw_menu()
   end
 end
 
 __gfx__
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00700700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00077000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00077000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00700700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000055555500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000000005f55f500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0070070000ffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000050000500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00077000055555500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00700700055555500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000005555000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000005005000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -413,4 +432,3 @@ __music__
 00 41424344
 00 41424344
 00 41424344
-
