@@ -4,6 +4,8 @@ __lua__
 --princesses quest
 --increment
 
+--hi this is a test
+
 function _init()
   cls(7)
   debug={}
@@ -432,3 +434,4 @@ __music__
 00 41424344
 00 41424344
 00 41424344
+
