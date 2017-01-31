@@ -4,8 +4,6 @@ __lua__
 --princesses quest
 --increment
 
---hi this is a test
-
 function _init()
   cls(7)
   debug={}
@@ -15,15 +13,54 @@ function _init()
   menu={"start","options"}
   menu_state="princesses quest"
 
-  entities={}--create a list of all entities in the current level
+  obj={}--create a list to hold all objects in the current level
 
   player={}--create the player object
   player.state=1--*1=warrior,2=archer,3=wizard,4=???
   player.x=0
   player.y=0
   player.sprite=1--corresponds to player state * anim length
+  function player:update()
+    if state=="player turn" then--input control if it is your turn
+      if btnp(0) then--move left
+        self.x-=8
+      elseif btnp(1) then--move right
+        self.x+=8
+      elseif btnp(2) then--move up
+        self.y-=8
+      elseif btnp(3) then--move down
+        self.y+=8
+      elseif btnp(4) then--switch characters
+        self.state+=1
+        if self.state>4 then--*need to account for fallen allies here too
+          self.state=1
+        end
+      elseif btnp(5) then--pause the game
+        state="pause"
+      end
+    end
+  end
+  function player:draw()
+    spr(self.state,self.x,self.y)--*need to add animation to state variable
+  end
 
-  add(entities,player)--add the player to list of entities
+  add(obj,player)--add the player to list of entities
+
+  item={}--item dictionary
+  item.potion={info="",cost=0}
+  item.sword={info="",cost=0}--*maybe put this into equipment table?
+end
+
+function update_table(table)
+  for obj in all(table) do
+    obj.update(obj)
+  end
+end
+
+function draw_table(table)
+  for obj in all(table) do
+    obj.draw(obj)
+  end
 end
 
 function update_menu()
@@ -68,7 +105,7 @@ function menu_action()
   if menu_state=="princesses quest" then
     nil_table(menu)--clear the current menu table
     if cursor_id==1 then
-      state="play"--start the game
+      state="player turn"--start the game
       nil_table(menu)
       add(menu,"resume")
       add(menu,"exit to menu")
@@ -88,7 +125,7 @@ function menu_action()
     end
   elseif menu_state=="pause" then
     if cursor_id==1 then--resume the game
-      state="play"
+      state="player turn"
     elseif cursor_id==2 then--exit to main menu
       nil_table(menu)
       add(menu,"start")
@@ -115,10 +152,8 @@ end
 function _update60()
   if state=="title" then
     update_menu()
-  elseif state=="play" then
-    if btnp(5) then--*put this into a player input object?
-      state="pause"--pause the game
-    end
+  elseif state=="player turn" then
+    update_table(obj)
   elseif state=="pause" then
     update_menu()
   end
@@ -133,8 +168,9 @@ function _draw()
   end
   if state=="title" or state=="pause" then
     draw_menu()
-  --elseif state=="pause" then
-  --  draw_menu()
+  elseif state=="player turn" then
+    --draw all objects, map, and gui
+    draw_table(obj)
   end
 end
 
@@ -434,4 +470,3 @@ __music__
 00 41424344
 00 41424344
 00 41424344
-
