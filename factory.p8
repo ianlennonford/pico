@@ -6,23 +6,25 @@ __lua__
 
 function _init()
 	cls()
-	palt(15,true)--sets white as the transparent color
+	palt(15,true)--sets peach as the transparent color
  palt(0,false)--makes black a useable color
 	state="create"
+--global variables--
+	grav=0.2
 
 	actors={}--table for all actors
 	actor={--create an actor "class"
-  x=0,
-  y=0,
   dx=0,
   dy=0,
-  spd=0.5,
+  spd=1,
+  jumpspd=-2,
   facing=1,--1=right,-1=left
 		onground=true,
-		frame=0,
+		step=0,
+		frame=1,
+		idle={1},
 		walk={1,2,3,4,5,2,6,7},
-		jump_up={7,8},
-		jump_down={9,10},
+		jump={4},
   mt={},--for setting the metatable
   new=function()--creates a new actor(player, enemy, etc)
   	local a={}
@@ -37,21 +39,62 @@ function _init()
    end
   end,
   update=function(self)
-  	if time()%0.5==0 then self.frame+=1 end--cycle frames
+  	self.step+=1
+  	if(self.step%6==0) self.frame+=1
   	if self.frame>#self.anim then self.frame=1 end
-  	
-  	--input for player movement
-  	if btn(0) then
-  		self.facing=-1
-  		self.dx=self.facing*self.spd
-  	elseif btn(1) then
-  		self.facing=1
-  		self.dx=self.facing*self.spd
+--input for player movement--
+			local startx=self.x
+	--jump
+  	if btnp(5) and self.onground then
+				self.dy=self.jumpspd
+			end
+	--left/right movement
+  	if btn(0) or btn(1) then
+  		if btn(0) then self.facing=-1 end
+  		if btn(1) then self.facing=1 end
+  		self.anim=self.walk
+  		self.dx=self.spd*self.facing
   	else
+  		self.frame=1
+  		self.anim=self.idle
   		self.dx=0
   	end
+  --move player left/right
   	self.x+=self.dx
-  	self.y+=self.dy
+  --side collision
+ 	 local xoffset=0
+			if self.dx>0 then xoffset=7 end
+  	local h=mget((self.x+xoffset)/8,(self.y+7)/8)
+			if fget(h,0) then
+				self.x=startx
+			end
+		--add gravity
+			self.dy+=grav
+		--move player up/down
+			self.y+=self.dy
+		--floor collision
+			local v=mget((self.x+4)/8,(self.y+8)/8)
+			self.onground=false
+			if self.dy>=0 then--if moving down
+				if fget(v,0) then
+					self.y=flr((self.y)/8)*8
+					self.dy=0
+					self.onground=true
+				end
+			end
+	--ceiling collision
+			v=mget((self.x+4)/8,(self.y)/8)
+			if self.dy<=0 then--if moving up
+				if fget(v,0) then
+					self.y=flr((self.y+8)/8)*8
+					self.dy = 0
+				end
+			end
+			--jump animation
+  	if not self.onground then
+  		self.frame=1
+  		self.anim=self.jump
+  	end
   end,
 	}
 	actor.mt.__index=actor
@@ -73,11 +116,13 @@ function _draw()
 		--chack map and create actors
 		for y=0,16 do
 			for x=0,16 do
-				if(fget(mget(x,y),7))then--if an actor is here
+				local s=mget(x,y)
+				if(fget(s,7))then--if an actor is here
 					p=actor.new()
+					p.id=s--set id to this sprite
 					p.x=x*8
 					p.y=y*8
-					p.anim=p.walk--*why???
+					p.anim=p.idle
 					add(actors,p)
 					mset(x,y,0)
 				end
