@@ -4,6 +4,8 @@ __lua__
 --factory
 --(c)2017 increment
 
+--test
+
 function _init()
 	cls()
 	palt(15,true)--sets peach as the transparent color
